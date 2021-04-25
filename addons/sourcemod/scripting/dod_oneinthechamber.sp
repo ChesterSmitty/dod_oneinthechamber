@@ -19,19 +19,25 @@ public Plugin myinfo =
 //# Constants
 //##################
 #define DOD_MAXPLAYERS	33
+
 #define TEAM_SPECTATOR  1
 #define TEAM_ALLIES  		2
 #define TEAM_AXIS  			3
 #define TEAM_RANDOM  		4
 
+#define MAXCLASSES		14
+#define MAXWEAPONS		22
+
 new Handle:v_TextEnabled = INVALID_HANDLE;
 
-enum Slots
+enum
 {
-Slot_Primary,
-Slot_Secondary,
-Slot_Melee,
-Slot_Grenade
+	SLOT_INVALID = -1,
+	SLOT_PRIMARY,
+	SLOT_SECONDARY,
+	SLOT_MELEE,
+	SLOT_GRENADE,
+	SLOT_EXPLOSIVE
 };
 
 //##################
@@ -54,6 +60,7 @@ public void OnPluginStart()
 	CreateConVar("sm_setammo_version", PLUGIN_VERSION, "Set Ammo Version", FCVAR_REPLICATED|FCVAR_NOTIFY | FCVAR_PLUGIN | FCVAR_SPONLY);
 	RegAdminCmd("sm_setammo", CommandSetAmmo, ADMFLAG_ROOT, "sm_setammo <Player> <Slot> <Offhand Ammo>");
 	RegAdminCmd("sm_setclip", CommandSetClip, ADMFLAG_ROOT, "sm_setclip <Player> <Slot> <Ammo>");
+	RegAdminCmd("sm_oneinthechamber", CommandOneInTheChamber, ADMFLAG_ROOT, "sm_oneinthechamber");
 	v_TextEnabled = CreateConVar("sm_setammo_showtext", "1", "Enable/Disable Text <1/0>", 0, true, 0.0, true, 1.0);
 	//PrintToServer("Sgt. Smith's One in the Chamber Plugin here!");
   //RegAdminCmd("sm_oneinthechamber", Command_OneInTheChamber, ADMFLAG_SLAY);
@@ -61,13 +68,45 @@ public void OnPluginStart()
 	//AutoExecConfig(true, "plugin_oneinthechamber");
 }
 
+// Example for realism Helper
+/*
+if(GetEdictClassname(Weapon, WeaponName, sizeof(WeaponName)))
+{
+	for(new weap = 0; weap < MAXWEAPONS; weap++)
+	{
+		if(StrEqual(WeaponName, g_Weapon[weap]))
+		{
+			SetEntData(client, g_iAmmo + g_AmmoOffs[weap], 0)
+			if(weap < 19)
+			{
+				SetEntData(Weapon, g_iClip1, 0)
+			}
+		}
+	}
+*/
 
 
 public OnPlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	GivePlayerItem(client, "weapon_colt");
-	SetAmmo(client, Slot_Secondary, 1);
+	RemoveWeapons(client)
+	//GivePlayerItem(client, "weapon_colt");
+	new iWeapon = GivePlayerItem(client, "weapon_colt");
+	new jWeapon = GivePlayerItem(client, "weapon_amerknife");
+	new m_iClip1 = GetEntProp(iWeapon, Prop_Send, "m_iClip1");
+	SetEntProp(iWeapon, Prop_Send, "m_iClip1", 1);
+	//SetClip(client, iWeapon, 1)
+	SetAmmo(client, iWeapon, 0);
+	//new m_iPrimaryAmmoType = GetEntProp("weapon_colt", Prop_Send, "m_iPrimaryAmmoType");
+	//new m_iClip1 = -1;
+	//new m_iAmmo_prim     = -1;
+	//SetEntProp("weapon_colt", Prop_Send, "m_iClip1", 1)
+	//SetEntProp(client, Prop_Send, "m_iAmmo", 0 _, m_iPrimaryAmmoType);
+	//if(m_iPrimaryAmmoType != -1)
+	//{
+	//		m_iClip1 = GetEntProp("weapon_colt", Prop_Send, "m_iClip1");
+	//		m_iAmmo_prim = GetEntProp(client, Prop_Send, "m_iAmmo", _, m_iPrimaryAmmoType);
+	//}
 }
 
 
@@ -225,6 +264,20 @@ stock SetAmmo(client, wepslot, newAmmo)
 		new iOffset = GetEntProp(weapon, Prop_Send, "m_iPrimaryAmmoType", 1)*4;
 		new iAmmoTable = FindSendPropInfo("CDODPlayer", "m_iAmmo");
 		SetEntData(client, iAmmoTable+iOffset, newAmmo, 4, true);
+	}
+}
+
+
+
+RemoveWeapons(client)
+{
+	for (new i = 0, iWeapon; i < 5; i++)
+	{
+		if ((iWeapon = GetPlayerWeaponSlot(client, i)) != -1)
+		{
+			RemovePlayerItem(client, iWeapon);
+			RemoveEdict(iWeapon);
+		}
 	}
 }
 
