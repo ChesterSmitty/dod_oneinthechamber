@@ -43,7 +43,8 @@ enum
 //##################
 //# Variables
 //##################
-new m_iAmmo;
+new bool:g_bModRunning = true;
+new bool:g_bRoundActive = true ;
 
 //##################
 //# Config
@@ -55,13 +56,13 @@ new m_iAmmo;
 
 public void OnPluginStart()
 {
-	m_iAmmo = FindSendPropOffs("CDODPlayer", "m_iAmmo");
+	//m_iAmmo = FindSendPropOffs("CDODPlayer", "m_iAmmo");
 	HookEvent("player_spawn", OnPlayerSpawn);
-	CreateConVar("sm_setammo_version", PLUGIN_VERSION, "Set Ammo Version", FCVAR_REPLICATED|FCVAR_NOTIFY | FCVAR_PLUGIN | FCVAR_SPONLY);
+	CreateConVar("dod_oneinthechamber_version", PLUGIN_VERSION, "DoD OneInTheChamber", FCVAR_PLUGIN | FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY)
 	RegAdminCmd("sm_setammo", CommandSetAmmo, ADMFLAG_ROOT, "sm_setammo <Player> <Slot> <Offhand Ammo>");
 	RegAdminCmd("sm_setclip", CommandSetClip, ADMFLAG_ROOT, "sm_setclip <Player> <Slot> <Ammo>");
 	RegAdminCmd("sm_oneinthechamber", CommandOneInTheChamber, ADMFLAG_ROOT, "sm_oneinthechamber");
-	v_TextEnabled = CreateConVar("sm_setammo_showtext", "1", "Enable/Disable Text <1/0>", 0, true, 0.0, true, 1.0);
+	//v_TextEnabled = CreateConVar("sm_setammo_showtext", "1", "Enable/Disable Text <1/0>", 0, true, 0.0, true, 1.0);
 	//PrintToServer("Sgt. Smith's One in the Chamber Plugin here!");
   //RegAdminCmd("sm_oneinthechamber", Command_OneInTheChamber, ADMFLAG_SLAY);
 	//LoadTranslations("common.phrases.txt");
@@ -110,6 +111,19 @@ public OnPlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
 }
 
 
+public Event_PlayerDeath(Handle:event, const String:szName[], bool:bDontBroadcast)
+{
+	if (g_bRoundActive)
+	{
+		new client = GetClientOfUserId(GetEventInt(event, "userid"));
+		//Move to Specate
+		ChangeClientTeam(client, TEAM_SPECTATOR)
+		//Lookup player who killed other player
+		new attacker   = GetClientOfUserId(GetEventInt(event, "attacker"))
+		//Give one bullet for colt
+		SetAmmo(attacker, 2, 1)
+	}
+}
 
 public Action:CommandOneInTheChamber(int client, int args)
 {
