@@ -43,8 +43,8 @@ enum
 //##################
 //# Variables
 //##################
-new bool:g_bModRunning = true;
-new bool:g_bRoundActive = true ;
+new bool:g_bModRunning = false;
+new bool:g_bRoundActive = false ;
 
 //##################
 //# Config
@@ -65,7 +65,7 @@ public void OnPluginStart()
 	//v_TextEnabled = CreateConVar("sm_setammo_showtext", "1", "Enable/Disable Text <1/0>", 0, true, 0.0, true, 1.0);
 	//PrintToServer("Sgt. Smith's One in the Chamber Plugin here!");
   //RegAdminCmd("sm_oneinthechamber", Command_OneInTheChamber, ADMFLAG_SLAY);
-	//LoadTranslations("common.phrases.txt");
+	LoadTranslations("common.phrases.txt");
 	//AutoExecConfig(true, "plugin_oneinthechamber");
 }
 
@@ -91,12 +91,11 @@ public OnPlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
 	RemoveWeapons(client)
-	//GivePlayerItem(client, "weapon_colt");
+	//Give Colt with single bullet in clip and Knife
 	new iWeapon = GivePlayerItem(client, "weapon_colt");
 	new jWeapon = GivePlayerItem(client, "weapon_amerknife");
 	new m_iClip1 = GetEntProp(iWeapon, Prop_Send, "m_iClip1");
 	SetEntProp(iWeapon, Prop_Send, "m_iClip1", 1);
-	//SetClip(client, iWeapon, 1)
 	SetAmmo(client, iWeapon, 0);
 	//new m_iPrimaryAmmoType = GetEntProp("weapon_colt", Prop_Send, "m_iPrimaryAmmoType");
 	//new m_iClip1 = -1;
