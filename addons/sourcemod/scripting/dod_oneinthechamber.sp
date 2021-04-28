@@ -1,10 +1,10 @@
 #include <sourcemod>
 #include <sdktools>
 #include <sdkhooks>
+//#include "oitc/config.sp"
 //#include <dodhooks>
-//#pragma semicolon 1
+#pragma semicolon 1
 //#pragma newdecls required
-//LOOK AT FindSendPropInfo
 #define PLUGIN_VERSION		"1.0"
 //##################
 //# Plugin Details
@@ -36,29 +36,41 @@ new Handle:v_TextEnabled = INVALID_HANDLE;
 //##################
 //# Variables
 //##################
-new Handle:ScoreToWin = INVALID_HANDLE
+char g_sSounds[2][] = {"", "dod_oneinthechamber/codSoundfile.wav"};
+new Handle:ScoreToWin = INVALID_HANDLE;
 new bool:g_bModRunning = true;
-new bool:g_bRoundActive = true ;
-
-new g_scoreallies = 0
-new g_scoreaxis = 0
+new bool:g_bRoundActive = true;
 
 
 //##################
 //# Config
 //##################
-new Handle:SetupTime = INVALID_HANDLE
+//new Handle:SetupTime = INVALID_HANDLE;
 //##################
 //# Actions
 //##################
+
+public void OnConfigsExecuted()
+{
+
+	char sSound[64];
+
+	for (int i = 1; i < sizeof(g_sSounds); i++) {
+
+		Format(sSound, sizeof(sSound), "sound/%s", g_sSounds[i]);
+		PrecacheSound(g_sSounds[i]);
+		AddFileToDownloadsTable(sSound);
+	}
+	return;
+}
 
 public void OnPluginStart()
 {
 	//m_iAmmo = FindSendPropOffs("CDODPlayer", "m_iAmmo");
 	HookEvent("player_spawn", OnPlayerSpawn);
 	//HookEvent("player_death", Event_PlayerDeath, EventHookMode_Post);
-	CreateConVar("dod_oneinthechamber_version", PLUGIN_VERSION, "DoD OneInTheChamber", FCVAR_PLUGIN | FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY)
-	ScoreToWin = CreateConVar("dod_oneinthechamber_scoretowin", "5", "<#> = Number of rounds to win the map", FCVAR_PLUGIN, true, 1.0, true, 15.0)
+	CreateConVar("dod_oneinthechamber_version", PLUGIN_VERSION, "DoD OneInTheChamber", FCVAR_PLUGIN | FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY);
+	ScoreToWin = CreateConVar("dod_oneinthechamber_scoretowin", "10", "<#> = Number of kills to win the map", FCVAR_PLUGIN, true, 1.0, true, 15.0);
 	RegAdminCmd("sm_setammo", CommandSetAmmo, ADMFLAG_ROOT, "sm_setammo <Player> <Slot> <Offhand Ammo>");
 	//RegAdminCmd("sm_setclip", CommandSetClip, ADMFLAG_ROOT, "sm_setclip <Player> <Slot> <Ammo>");
 	RegAdminCmd("sm_oneinthechamber", CommandOneInTheChamber, ADMFLAG_ROOT, "sm_oneinthechamber");
@@ -67,18 +79,22 @@ public void OnPluginStart()
 	//AutoExecConfig(true, "plugin_oneinthechamber");
 }
 
+//public OnMapStart()
+//{
+//	PrecacheSound("buttons/blip1.wav", true);
+//}
+
 
 public OnPlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	RemoveWeapons(client)
+	RemoveWeapons(client);
 	//Give Colt with single bullet in clip and Knife
 	new iWeapon = GivePlayerItem(client, "weapon_colt");
-	new jWeapon = GivePlayerItem(client, "weapon_amerknife");
+	GivePlayerItem(client, "weapon_amerknife");
 	//new m_iClip1 = GetEntProp(iWeapon, Prop_Send, "m_iClip1");
 	SetEntProp(iWeapon, Prop_Send, "m_iClip1", 1);
-	//SetAmmo(client, iWeapon, 0);
-	SetAmmo(client, 2, 0)
+	SetAmmo(client, 2, 0);
 }
 
 
@@ -99,7 +115,7 @@ public OnPlayerSpawn(Handle:event, const String:name[], bool:dontBroadcast)
 public OnClientPutInServer(client)
 {
     SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
-
+		EmitSoundToClient(client, g_sSounds[1]);
 }
 
 
@@ -119,8 +135,8 @@ public Action:OnTakeDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 		return Plugin_Handled;
 	}
 	damage = 300.0;
-	SetAmmo(attacker, 1, 1)
-	return Plugin_Changed
+	SetAmmo(attacker, 1, 1);
+	return Plugin_Changed;
 }
 
 
@@ -160,7 +176,7 @@ public Action:CommandSetAmmo(client, args)
 	//Get weapon slot
 	GetCmdArg(2, buffer, sizeof(buffer));
 	new Slot = StringToInt(buffer);
-	Slot--
+	Slot--;
 
 	//Get ammo
 	GetCmdArg(3, buffer, sizeof(buffer));
@@ -172,7 +188,7 @@ public Action:CommandSetAmmo(client, args)
 	}
 	for (new i = 0; i < target_count; i ++)
 	{
-		SetAmmo(target_list[i], Slot, Ammo)
+		SetAmmo(target_list[i], Slot, Ammo);
 	}
 
 	return Plugin_Handled;
